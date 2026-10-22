@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Employee Management</title>
+<style>
+:root{--bg:#f3f5f9;--surface:#fff;--ink:#17202e;--muted:#5d6879;--line:#d9dfe8;--accent:#1f4fd8;--accent-ink:#fff;--ok:#12703f;--err:#b3261e;--head:#eaeef6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151f;--surface:#18202e;--ink:#e7ecf4;--muted:#9aa6b8;--line:#2a3547;--accent:#6b93ff;--accent-ink:#0b1220;--ok:#5fd493;--err:#ff8a80;--head:#1f2a3c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10151f;--surface:#18202e;--ink:#e7ecf4;--muted:#9aa6b8;--line:#2a3547;--accent:#6b93ff;--accent-ink:#0b1220;--ok:#5fd493;--err:#ff8a80;--head:#1f2a3c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:920px;margin:0 auto;padding:28px 18px 48px}
+h1{font-size:1.8rem;margin:0}
+.sub{color:var(--muted);margin:2px 0 22px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.tab{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font:inherit;font-weight:600;padding:10px 14px;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px}
+.panel[hidden]{display:none}
+h2{font-size:1.2rem;margin:0 0 16px}
+label{display:block;font-weight:600;font-size:.92rem;margin:14px 0 5px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 11px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media (max-width:600px){.row{grid-template-columns:1fr}}
+.btn{margin-top:20px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;font:inherit;font-weight:700;padding:10px 20px;cursor:pointer}
+.msg{margin-top:16px;padding:10px 12px;border-radius:6px;border:1px solid;font-weight:600}
+.msg.ok{color:var(--ok);border-color:var(--ok)}
+.msg.err{color:var(--err);border-color:var(--err)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--head);font-size:.88rem}
+.empty{color:var(--muted);padding:6px 0}
+.total{margin-top:14px}
+.del{background:none;border:1px solid var(--line);color:var(--err);border-radius:6px;padding:3px 10px;cursor:pointer;font:inherit;font-size:.85rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>👥 Employee Management</h1>
+  <p class="sub">Talent Management Platform</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-add" aria-selected="true" aria-controls="p-add">➕ Add Employee</button>
+    <button class="tab" role="tab" id="t-view" aria-selected="false" aria-controls="p-view">📋 View Employees</button>
+  </div>
+
+  <section class="panel" id="p-add" role="tabpanel" aria-labelledby="t-add">
+    <h2>Add a new employee</h2>
+    <form id="form" novalidate>
+      <label for="name">Full name</label>
+      <input id="name" autocomplete="off">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="off">
+      <div class="row">
+        <div>
+          <label for="dept">Department</label>
+          <select id="dept">
+            <option>Engineering</option><option>HR</option><option>Finance</option>
+            <option>Marketing</option><option>Sales</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="role">Job role</label>
+          <input id="role" autocomplete="off">
+        </div>
+      </div>
+      <label for="date">Joining date</label>
+      <input id="date" type="date">
+      <button class="btn" type="submit">Save employee</button>
+    </form>
+    <div id="msg" role="status"></div>
+  </section>
+
+  <section class="panel" id="p-view" role="tabpanel" aria-labelledby="t-view" hidden>
+    <h2>Saved employees</h2>
+    <div id="list"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  var KEY="employees_v1", employees=[], nextId=1;
+  var $=function(id){return document.getElementById(id)};
+
+  // Storage (try/catch: may be empty or blocked)
+  function load(){
+    try{
+      var raw=localStorage.getItem(KEY);
+      if(raw){var d=JSON.parse(raw);employees=d.employees||[];nextId=d.nextId||1}
+    }catch(e){}
+  }
+  function save(){
+    try{localStorage.setItem(KEY,JSON.stringify({employees:employees,nextId:nextId}))}catch(e){}
+  }
+
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+
+  function show(text,type){
+    $("msg").innerHTML='<div class="msg '+type+'">'+esc(text)+'</div>';
+  }
+
+  // Tabs
+  function select(tab){
+    var add=tab==="add";
+    $("t-add").setAttribute("aria-selected",add);
+    $("t-view").setAttribute("aria-selected",!add);
+    $("p-add").hidden=!add;
+    $("p-view").hidden=add;
+    if(!add)render();
+  }
+  $("t-add").onclick=function(){select("add")};
+  $("t-view").onclick=function(){select("view")};
+
+  // Add employee (same checks as the Python app)
+  $("form").addEventListener("submit",function(e){
+    e.preventDefault();
+    var name=$("name").value.trim(), email=$("email").value.trim(),
+        role=$("role").value.trim(), dept=$("dept").value,
+        date=$("date").value||new Date().toISOString().slice(0,10);
+    if(!name||!email||!role)return show("Please fill in name, email, and role.","err");
+    if(email.indexOf("@")<0)return show("Please enter a valid email address.","err");
+    var dup=employees.some(function(x){return x.email.toLowerCase()===email.toLowerCase()});
+    if(dup)return show("An employee with this email already exists.","err");
+    employees.push({id:nextId++,name:name,email:email,department:dept,role:role,join_date:date});
+    save();
+    $("form").reset();
+    show(name+" was added successfully!","ok");
+  });
+
+  // View employees
+  function render(){
+    var box=$("list");
+    if(!employees.length){
+      box.innerHTML='<p class="empty">No employees yet. Add one in the first tab.</p>';
+      return;
+    }
+    var rows=employees.map(function(x){
+      return "<tr><td>"+x.id+"</td><td>"+esc(x.name)+"</td><td>"+esc(x.email)+"</td><td>"+
+        esc(x.department)+"</td><td>"+esc(x.role)+"</td><td>"+esc(x.join_date)+
+        '</td><td><button class="del" data-id="'+x.id+'">Remove</button></td></tr>';
+    }).join("");
+    box.innerHTML='<div class="scroll"><table><thead><tr><th>id</th><th>name</th><th>email</th><th>department</th><th>role</th><th>join_date</th><th></th></tr></thead><tbody>'+
+      rows+'</tbody></table></div><p class="total">Total employees: <strong>'+employees.length+'</strong></p>';
+  }
+  $("list").addEventListener("click",function(e){
+    var id=e.target.getAttribute&&e.target.getAttribute("data-id");
+    if(!id)return;
+    employees=employees.filter(function(x){return String(x.id)!==id});
+    save();render();
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
