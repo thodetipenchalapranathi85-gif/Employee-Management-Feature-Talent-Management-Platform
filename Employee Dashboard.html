@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Employee Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f4f6f8;--surface:#ffffff;--ink:#17233c;--muted:#5c6b82;--line:#dfe4ea;
+  --accent:#0f766e;--accent-ink:#ffffff;--bar:#0f766e;--bar2:#3b5b92;--danger:#b42318;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#0f1624;--surface:#172136;--ink:#e8edf6;--muted:#9aa8c0;--line:#27334d;
+  --accent:#2dd4bf;--accent-ink:#06201c;--bar:#2dd4bf;--bar2:#7ea2e8;--danger:#ff8a80;}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1624;--surface:#172136;--ink:#e8edf6;--muted:#9aa8c0;--line:#27334d;
+  --accent:#2dd4bf;--accent-ink:#06201c;--bar:#2dd4bf;--bar2:#7ea2e8;--danger:#ff8a80;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+h1{font-size:1.6rem;font-weight:800;margin:0;letter-spacing:-.02em}
+h2{font-size:1rem;font-weight:700;margin:0 0 12px}
+.sub{color:var(--muted);font-size:.9rem;margin:2px 0 0}
+button,input,select{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:500}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn.danger{color:var(--danger)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:16px}
+.kpi{padding:14px 16px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:0}
+.kpi b{display:block;font-size:1.45rem;font-weight:800;letter-spacing:-.02em}
+.kpi span{color:var(--muted);font-size:.82rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.bar{display:grid;grid-template-columns:92px 1fr auto;gap:10px;align-items:center;margin:8px 0;font-size:.88rem}
+.track{height:12px;background:var(--bg);border-radius:6px;overflow:hidden}
+.fill{height:100%;background:var(--bar);border-radius:6px;transition:width .35s}
+.fill.b2{background:var(--bar2)}
+.trend{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:8px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:.78rem;color:var(--muted)}
+.col i{display:block;width:100%;max-width:44px;background:var(--bar2);border-radius:5px 5px 0 0;min-height:3px}
+.col em{font-style:normal;color:var(--ink);font-weight:700}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tools input,.tools select,dialog input,dialog select{padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0}
+.tools input{flex:1;min-width:180px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:500;font-size:.82rem}
+td.num,th.num{text-align:right}
+.empty{padding:28px 8px;text-align:center;color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:20px;width:min(480px,92vw)}
+dialog::backdrop{background:rgba(10,16,28,.55)}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f label{display:flex;flex-direction:column;gap:4px;font-size:.84rem;color:var(--muted)}
+.f .wide{grid-column:1/-1}
+.err{color:var(--danger);font-size:.85rem;min-height:1.2em;margin:10px 0 0}
+@media (max-width:520px){.f{grid-template-columns:1fr}.kpi{border-right:0;border-bottom:1px solid var(--line)}.kpi:last-child{border-bottom:0}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Employee dashboard</h1>
+      <p class="sub">Headcount, pay and hiring at a glance. Records are saved in this browser.</p>
+    </div>
+    <div class="row">
+      <button class="btn" id="sample">Load sample data</button>
+      <button class="btn primary" id="add">Add employee</button>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis" aria-label="Summary"></section>
+
+  <section class="grid">
+    <div class="card"><h2>Employees by department</h2><div id="byDept"></div></div>
+    <div class="card"><h2>Average salary by department</h2><div id="salDept"></div></div>
+    <div class="card"><h2>Hiring over the last 6 months</h2><div class="trend" id="trend"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Employee records</h2>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Search by name, ID or department" aria-label="Search employees">
+      <select id="dept" aria-label="Filter by department"></select>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Designation</th><th>Joined</th><th class="num">Salary</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <div class="empty" id="empty" hidden>No employees yet. Add one, or load the sample data.</div>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" id="form" class="f" novalidate>
+    <h2 class="wide">Add employee</h2>
+    <label>Employee ID *<input name="code" placeholder="EMP008" required></label>
+    <label>Full name *<input name="name" required></label>
+    <label>Email<input name="email" type="email"></label>
+    <label>Phone<input name="phone"></label>
+    <label>Department<select name="department"></select></label>
+    <label>Designation<input name="designation"></label>
+    <label>Salary (₹)<input name="salary" type="number" min="0" step="500" value="0"></label>
+    <label>Joining date<input name="date" type="date"></label>
+    <p class="err wide" id="err" role="alert"></p>
+    <div class="row wide" style="justify-content:flex-end">
+      <button type="button" class="btn" id="cancel">Cancel</button>
+      <button type="submit" class="btn primary">Save employee</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  var KEY="employee_dashboard_v1", DEPTS=["HR","Engineering","Finance","Sales","Marketing","Operations","Other"];
+  var $=function(id){return document.getElementById(id)};
+  var mem=null;
+  function load(){try{var r=localStorage.getItem(KEY);if(r)return JSON.parse(r)}catch(e){}return mem||[]}
+  function save(d){mem=d;try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}}
+  var data=load();
+  var inr=function(n){return "₹"+Math.round(n).toLocaleString("en-IN")};
+  var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+  function iso(d){return d.toISOString().slice(0,10)}
+  function ago(days){var d=new Date();d.setDate(d.getDate()-days);return iso(d)}
+
+  function sample(){
+    var s=[["EMP001","Ravi Kumar","Engineering","Software Engineer",65000,400],["EMP002","Anitha Reddy","HR","HR Executive",42000,300],
+      ["EMP003","Suresh Babu","Finance","Accountant",48000,220],["EMP004","Priya Sharma","Sales","Sales Manager",72000,150],
+      ["EMP005","Kiran Raju","Engineering","Team Lead",95000,90],["EMP006","Divya Lakshmi","Marketing","Designer",46000,45],
+      ["EMP007","Mohan Rao","Operations","Supervisor",52000,20],["EMP008","Lavanya N","Engineering","QA Engineer",50000,70],
+      ["EMP009","Harish V","Sales","Executive",38000,35]];
+    s.forEach(function(r){if(!data.some(function(e){return e.code===r[0]}))
+      data.push({code:r[0],name:r[1],email:"",phone:"",department:r[2],designation:r[3],salary:r[4],date:ago(r[5])})});
+    save(data);render();
+  }
+
+  function group(list,fn){var m={};list.forEach(function(e){var k=e.department||"Other";(m[k]=m[k]||[]).push(e)});return m}
+
+  function bars(el,rows,fmt,cls){
+    if(!rows.length){el.innerHTML='<p class="sub">No data yet.</p>';return}
+    var max=Math.max.apply(null,rows.map(function(r){return r[1]}))||1;
+    el.innerHTML=rows.map(function(r){
+      return '<div class="bar"><span>'+esc(r[0])+'</span><div class="track"><div class="fill '+(cls||"")+'" style="width:'+(r[1]/max*100)+'%"></div></div><b>'+fmt(r[1])+'</b></div>'}).join("");
+  }
+
+  function render(){
+    var g=group(data), n=data.length, total=data.reduce(function(a,e){return a+(+e.salary||0)},0);
+    var ms=new Date();ms.setDate(1);var msIso=iso(ms);
+    var fresh=data.filter(function(e){return e.date>=msIso}).length;
+    $("kpis").innerHTML=[["Employees",n],["Departments",Object.keys(g).length],["Average salary",n?inr(total/n):"₹0"],["Monthly payroll",inr(total)],["Joined this month",fresh]]
+      .map(function(k){return '<div class="kpi"><b>'+k[1]+'</b><span>'+k[0]+'</span></div>'}).join("");
+
+    var names=Object.keys(g).sort();
+    bars($("byDept"),names.map(function(k){return [k,g[k].length]}).sort(function(a,b){return b[1]-a[1]}),String);
+    bars($("salDept"),names.map(function(k){return [k,g[k].reduce(function(a,e){return a+(+e.salary||0)},0)/g[k].length]}).sort(function(a,b){return b[1]-a[1]}),inr,"b2");
+
+    var months=[],now=new Date();
+    for(var i=5;i>=0;i--){var d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({key:d.toISOString().slice(0,7),label:d.toLocaleString("en-US",{month:"short"}),c:0})}
+    data.forEach(function(e){var m=months.filter(function(x){return x.key===(e.date||"").slice(0,7)})[0];if(m)m.c++});
+    var mx=Math.max.apply(null,months.map(function(m){return m.c}))||1;
+    $("trend").innerHTML=months.map(function(m){return '<div class="col"><em>'+m.c+'</em><i style="height:'+(m.c/mx*100)*0.78+'%"></i><span>'+m.label+'</span></div>'}).join("");
+
+    var cur=$("dept").value||"all";
+    $("dept").innerHTML='<option value="all">All departments</option>'+names.map(function(k){return '<option>'+esc(k)+'</option>'}).join("");
+    $("dept").value=names.indexOf(cur)>-1?cur:"all";
+
+    var q=$("q").value.toLowerCase(),df=$("dept").value;
+    var list=data.filter(function(e){
+      return (df==="all"||e.department===df)&&(!q||[e.name,e.code,e.department].join(" ").toLowerCase().indexOf(q)>-1)})
+      .sort(function(a,b){return (b.date||"").localeCompare(a.date||"")});
+    $("rows").innerHTML=list.map(function(e){
+      return '<tr><td>'+esc(e.code)+'</td><td>'+esc(e.name)+'</td><td>'+esc(e.department)+'</td><td>'+esc(e.designation)+'</td><td>'+esc(e.date)+'</td><td class="num">'+inr(e.salary||0)+'</td><td><button class="btn danger" data-del="'+esc(e.code)+'" aria-label="Delete '+esc(e.name)+'">Delete</button></td></tr>'}).join("");
+    $("empty").hidden=list.length>0;
+    $("empty").textContent=n?"No employees match your search.":"No employees yet. Add one, or load the sample data.";
+  }
+
+  $("form").elements.department.innerHTML=DEPTS.map(function(d){return '<option>'+d+'</option>'}).join("");
+  $("add").onclick=function(){$("form").reset();$("form").elements.date.value=iso(new Date());$("err").textContent="";$("dlg").showModal()};
+  $("cancel").onclick=function(){$("dlg").close()};
+  $("sample").onclick=sample;
+  $("q").oninput=render;$("dept").onchange=render;
+  $("rows").onclick=function(ev){var c=ev.target.getAttribute("data-del");
+    if(c&&confirm("Delete employee "+c+"?")){data=data.filter(function(e){return e.code!==c});save(data);render()}};
+  $("form").onsubmit=function(ev){
+    ev.preventDefault();var f=ev.target.elements,code=f.code.value.trim(),name=f.name.value.trim();
+    if(!code||!name){$("err").textContent="Employee ID and full name are required.";return}
+    if(data.some(function(e){return e.code.toLowerCase()===code.toLowerCase()})){$("err").textContent="Employee ID "+code+" already exists. Use a different ID.";return}
+    data.push({code:code,name:name,email:f.email.value.trim(),phone:f.phone.value.trim(),department:f.department.value,designation:f.designation.value.trim(),salary:+f.salary.value||0,date:f.date.value||iso(new Date())});
+    save(data);$("dlg").close();render();
+  };
+  render();
+})();
+</script>
+</body>
+</html>
