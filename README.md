@@ -59,3 +59,5 @@ Thodeti Penchala Pranathi
 ## 📄 Project Purpose
 
 Developed as a classroom task to practice Python, Streamlit, and SQLite by building a basic employee management feature for a talent management platform.
+## Live Project 
+https://employee-management-feature-talent-management-platform-cxhjzxp.streamlit.app/
